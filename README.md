@@ -175,7 +175,7 @@ docker run \
     -v osm-data:/data/database/ \
     -v osm-tiles:/data/tiles/ \
     -d overv/openstreetmap-tile-server \
-    run
+    import
 ```
 
 ### Cross-origin resource sharing
