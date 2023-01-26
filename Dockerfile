@@ -178,7 +178,7 @@ COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/ope
 USER renderer
 WORKDIR /home/renderer/src
 RUN git clone https://github.com/openstreetmap/tirex.git \
- && git -C tirex checkout v0.6.1
+ && git -C tirex checkout v0.7.0
 WORKDIR /home/renderer/src/tirex
 RUN make
 
@@ -191,7 +191,7 @@ RUN  mkdir /var/lib/tirex \
   && chown renderer:renderer /var/lib/tirex \
   && chown renderer:renderer /var/run/tirex \
   && chown renderer:renderer /var/log/tirex \
-  && chown renderer /var/lib/mod_tile
+  && chown renderer:renderer /var/lib/mod_tile
 
 COPY ajt.conf /etc/tirex/renderer/mapnik/
 COPY mapnik.conf /etc/tirex/renderer/
