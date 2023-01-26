@@ -129,10 +129,6 @@ if [ "$1" == "import" ]; then
         sudo -E -u renderer python3 /data/style/scripts/get-external-data.py -c /data/style/external-data.yml -D /data/style/data
     fi
 
-    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
-        render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
-    fi
-
     # Register that data has changed for mod_tile caching purposes
     sudo -u renderer touch /data/database/planet-import-complete
 
@@ -192,6 +188,10 @@ if [ "$1" == "run" ]; then
         sudo -u renderer touch /var/log/tiles/expiry.log; tail -f /var/log/tiles/expiry.log >> /proc/1/fd/1 &
         sudo -u renderer touch /var/log/tiles/osm2pgsql.log; tail -f /var/log/tiles/osm2pgsql.log >> /proc/1/fd/1 &
 
+    fi
+
+    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
+        render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
     fi
 
     # Run while handling docker stop's SIGTERM
