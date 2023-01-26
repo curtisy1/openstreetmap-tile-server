@@ -56,6 +56,7 @@ RUN apt-get update \
  fonts-noto-hinted \
  fonts-noto-unhinted \
  fonts-unifont \
+ g++ \
  git \
  gnupg2 \
  gdal-bin \
@@ -63,6 +64,8 @@ RUN apt-get update \
  libipc-sharelite-perl \
  libjson-perl \
  liblua5.3-dev \
+ libmapnik-dev \
+ libmapnik2-dev \
  libwww-perl \
  lua5.3 \
  mapnik-utils \
