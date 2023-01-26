@@ -190,10 +190,6 @@ if [ "$1" == "run" ]; then
 
     fi
 
-    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
-        render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
-    fi
-
     # Run while handling docker stop's SIGTERM
     stop_handler() {
         kill -TERM "$child"
@@ -203,6 +199,10 @@ if [ "$1" == "run" ]; then
     sudo -u renderer renderd -f -c /etc/renderd.conf &
     child=$!
     wait "$child"
+
+    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
+        render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
+    fi
 
     service postgresql stop
 
