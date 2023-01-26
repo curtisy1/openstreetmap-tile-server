@@ -56,6 +56,7 @@ RUN apt-get update \
  fonts-noto-hinted \
  fonts-noto-unhinted \
  fonts-unifont \
+ git \
  gnupg2 \
  gdal-bin \
  libgd-gd2-perl \
