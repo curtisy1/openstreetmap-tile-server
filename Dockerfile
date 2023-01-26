@@ -187,11 +187,11 @@ RUN make install
 RUN  mkdir /var/lib/tirex \
   && mkdir /var/log/tirex \
   && mkdir /var/run/tirex \
-  && mkdir /var/lib/mod_tile/ajx \
+  && mkdir /var/lib/mod_tile \
   && chown renderer:renderer /var/lib/tirex \
   && chown renderer:renderer /var/run/tirex \
   && chown renderer:renderer /var/log/tirex \
-  && chown renderer /var/lib/mod_tile/ajx
+  && chown renderer /var/lib/mod_tile
 
 COPY ajt.conf /etc/tirex/renderer/mapnik/
 COPY mapnik.conf /etc/tirex/renderer/
