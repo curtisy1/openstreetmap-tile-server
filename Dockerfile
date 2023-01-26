@@ -40,6 +40,7 @@ ENV AUTOVACUUM=on
 ENV UPDATES=disabled
 ENV REPLICATION_URL=https://planet.openstreetmap.org/replication/hour/
 ENV MAX_INTERVAL_SECONDS=3600
+ENV RENDERERAPP=renderd
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -49,6 +50,7 @@ RUN apt-get update \
  apache2 \
  cron \
  dateutils \
+ devscripts \
  fonts-hanazono \
  fonts-noto-cjk \
  fonts-noto-hinted \
@@ -56,9 +58,15 @@ RUN apt-get update \
  fonts-unifont \
  gnupg2 \
  gdal-bin \
+ libgd-gd2-perl \
+ libipc-sharelite-perl \
+ libjson-perl \
  liblua5.3-dev \
+ libwww-perl \
  lua5.3 \
  mapnik-utils \
+ mc \
+ nano \
  npm \
  osm2pgsql \
  osmium-tool \
@@ -67,6 +75,7 @@ RUN apt-get update \
  postgresql-14-postgis-3 \
  postgresql-14-postgis-3-scripts \
  postgis \
+ psmisc \
  python-is-python3 \
  python3-mapnik \
  python3-lxml \
@@ -78,7 +87,7 @@ RUN apt-get update \
  wget \
 && apt-get clean autoclean \
 && apt-get autoremove --yes \
-&& rm -rf /var/lib/{apt,dpkg,cache,log}/
+&& rm -rf /var/lib/{apt,dpkg,cache,log}
 
 RUN adduser --disabled-password --gecos "" renderer
 
@@ -159,6 +168,41 @@ MAXZOOM=20' >> /etc/renderd.conf \
 COPY --from=compiler-helper-script /home/renderer/src/regional /home/renderer/src/regional
 
 COPY --from=compiler-stylesheet /root/openstreetmap-carto /home/renderer/src/openstreetmap-carto-backup
+
+# clone, build and install tirex
+# according to fpllowing wiki article:
+#   https://wiki.openstreetmap.org/wiki/Tirex/Building_and_Installing
+USER renderer
+WORKDIR /home/renderer/src
+RUN git clone https://github.com/openstreetmap/tirex.git \
+ && git -C tirex checkout v0.6.1
+WORKDIR /home/renderer/src/tirex
+RUN make
+
+USER root
+RUN make install
+RUN  mkdir /var/lib/tirex \
+  && mkdir /var/log/tirex \
+  && mkdir /var/run/tirex \
+  && mkdir /var/lib/mod_tile/ajx \
+  && chown renderer:renderer /var/lib/tirex \
+  && chown renderer:renderer /var/run/tirex \
+  && chown renderer:renderer /var/log/tirex \
+  && chown renderer /var/lib/mod_tile/ajx
+
+COPY ajt.conf /etc/tirex/renderer/mapnik/
+COPY mapnik.conf /etc/tirex/renderer/
+COPY tirex.conf /etc/tirex/tirex.conf
+
+RUN ln -s /var/lib/mod_tile  /var/lib/tirex/tiles
+
+# remove not required tirex sample renderer and maps
+RUN  rm -fr /etc/tirex/renderer/openseamap \
+	&& rm -fr /etc/tirex/renderer/wms \
+	&& rm -fr /etc/tirex/renderer/mapserver \
+	&& rm -fr /etc/tirex/renderer/openseamap.conf \
+	&& rm -fr /etc/tirex/renderer/wms.conf \
+	&& rm -fr /etc/tirex/renderer/mapserver.conf
 
 # Start running
 COPY run.sh /

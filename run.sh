@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+STOP_CONT="no"
+
 function createPostgresConfig() {
   cp /etc/postgresql/14/main/postgresql.custom.conf.tmpl /etc/postgresql/14/main/conf.d/postgresql.custom.conf
   sudo -u postgres echo "autovacuum = $AUTOVACUUM" >> /etc/postgresql/14/main/conf.d/postgresql.custom.conf
@@ -10,6 +12,37 @@ function createPostgresConfig() {
 
 function setPostgresPassword() {
     sudo -u postgres psql -c "ALTER USER renderer PASSWORD '${PGPASSWORD:-renderer}'"
+}
+
+# handler for term signal
+function sighandler_TERM() {
+    echo "signal SIGTERM received\n"
+
+    echo "terminate apache2"
+    service apache2 stop
+
+    PID=`ps -eaf | grep renderd | grep -v grep | awk '{print $2}'`
+    if [[ "" !=  "$PID" ]]; then
+      echo "send SIGTERM to renderd PID=$PID"
+      kill -n 15 $PID
+    fi
+
+    PID=`ps -eaf | grep tirex-master | grep -v grep | awk '{print $2}'`
+    if [[ "" !=  "$PID" ]]; then
+      echo "send SIGTERM to tirex-master PID=$PID"
+      kill -n 15 $PID
+    fi
+
+    PID=`ps -eaf | grep tirex-backend-manager | grep -v grep | awk '{print $2}'`
+    if [[ "" !=  "$PID" ]]; then
+      echo "send SIGTERM to tirex-backend-manager PID=$PID"
+      kill -n 15 $PID
+    fi
+
+    echo "terminate postgresql"
+    service postgresql stop
+
+    STOP_CONT="yes"
 }
 
 if [ "$#" -ne 1 ]; then
@@ -27,6 +60,7 @@ if [ "$#" -ne 1 ]; then
     echo "    PRE_RENDER: whether or not pre-rendering of tiles should be enabled after import"
     echo "    PRE_RENDER_MINZOOM: lower bound to pre-render, default 0"
     echo "    PRE_RENDER_MAXZOOM: upper bound to pre-render, default 10"
+    echo "    RENDERERAPP: select render application renderd (default) or tirex"
     exit 1
 fi
 
@@ -132,10 +166,6 @@ if [ "$1" == "import" ]; then
     # Register that data has changed for mod_tile caching purposes
     sudo -u renderer touch /data/database/planet-import-complete
 
-    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
-        sudo -u renderer render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
-    fi
-
     service postgresql stop
 
     touch /var/lib/postgresql/14/main/.databaseImported
@@ -144,6 +174,9 @@ if [ "$1" == "import" ]; then
 fi
 
 if [ "$1" == "run" ]; then
+    # add handler for signal SIGTERM
+    trap 'sighandler_TERM' 15
+
     # Clean /tmp
     rm -rf /tmp/*
 
@@ -199,11 +232,24 @@ if [ "$1" == "run" ]; then
     }
     trap stop_handler SIGTERM
 
-    sudo -u renderer renderd -f -c /etc/renderd.conf &
-    child=$!
-    wait "$child"
 
-    service postgresql stop
+    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
+        sudo -u renderer render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
+    fi
+
+    if [ "$RENDERERAPP" == "renderd" ]; then
+        sudo -u renderer renderd -f -c /usr/local/etc/renderd.conf &
+    elif [ "$RENDERERAPP" == "tirex" ]; then
+        sudo -u renderer tirex-backend-manager -f &
+        sudo -u renderer tirex-master -d -f &
+    else
+        echo "RENDERERAPP not valid use renderd or tirex"
+    fi
+
+    echo "wait for terminate signal"
+    while [  "$STOP_CONT" = "no"  ] ; do
+      sleep 1
+    done
 
     exit 0
 fi
