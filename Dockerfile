@@ -65,7 +65,6 @@ RUN apt-get update \
  libjson-perl \
  liblua5.3-dev \
  libmapnik-dev \
- libmapnik2-dev \
  libwww-perl \
  lua5.3 \
  mapnik-utils \
