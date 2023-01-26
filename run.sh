@@ -24,6 +24,9 @@ if [ "$#" -ne 1 ]; then
     echo "    NAME_STYLE: name of the .style to use"
     echo "    NAME_MML: name of the .mml file to render to mapnik.xml"
     echo "    NAME_SQL: name of the .sql file to use"
+    echo "    PRE_RENDER: whether or not pre-rendering of tiles should be enabled after import"
+    echo "    PRE_RENDER_MINZOOM: lower bound to pre-render, default 0"
+    echo "    PRE_RENDER_MAXZOOM: upper bound to pre-render, default 10"
     exit 1
 fi
 
@@ -124,6 +127,10 @@ if [ "$1" == "import" ]; then
     chown -R renderer: /home/renderer/src/ /data/style/
     if [ -f /data/style/scripts/get-external-data.py ] && [ -f /data/style/external-data.yml ]; then
         sudo -E -u renderer python3 /data/style/scripts/get-external-data.py -c /data/style/external-data.yml -D /data/style/data
+    fi
+
+    if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
+        render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
     fi
 
     # Register that data has changed for mod_tile caching purposes

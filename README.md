@@ -160,6 +160,24 @@ docker run \
     run
 ```
 
+### Tile pre-rendering (optional)
+
+Specify custom pre-render settings to control which zoom level tiles are pre-rendered to potentially improve initial load performance.
+
+The example zoom values below are the default values.
+
+```
+docker run \
+    -p 8080:80 \
+    -e PRE_RENDER=enabled \
+    -e PRE_RENDER_MINZOOM=0 \
+    -e PRE_RENDER_MAXZOOM=10 \
+    -v osm-data:/data/database/ \
+    -v osm-tiles:/data/tiles/ \
+    -d overv/openstreetmap-tile-server \
+    import
+```
+
 ### Cross-origin resource sharing
 
 To enable the `Access-Control-Allow-Origin` header to be able to retrieve tiles from other domains, simply set the `ALLOW_CORS` variable to `enabled`:
