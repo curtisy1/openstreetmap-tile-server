@@ -133,7 +133,7 @@ if [ "$1" == "import" ]; then
     sudo -u renderer touch /data/database/planet-import-complete
 
     if [ "${PRE_RENDER:-}" == "enabled" ] || [ "${PRE_RENDER:-}" == "1" ]; then
-        sudo -u _renderd render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
+        sudo -u renderer render_list -m default -a -z ${PRE_RENDER_MINZOOM:-0} -Z ${PRE_RENDER_MAXZOOM:-10} -n $THREADS
     fi
 
     service postgresql stop
