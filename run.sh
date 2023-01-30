@@ -94,10 +94,9 @@ if [ "$1" == "import" ]; then
     # Initialize PostgreSQL
     createPostgresConfig
     service postgresql start
-    if ! id renderer > /dev/null; then
-      sudo -u postgres createuser renderer
-    fi
     
+    sudo -u postgres userdel -r renderer
+    sudo -u postgres createuser renderer
     sudo -u postgres createdb -E UTF8 -O renderer gis
     sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
     sudo -u postgres psql -d gis -c "CREATE EXTENSION hstore;"
