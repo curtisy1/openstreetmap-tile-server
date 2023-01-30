@@ -95,7 +95,7 @@ if [ "$1" == "import" ]; then
     createPostgresConfig
     service postgresql start
     
-    sudo -u postgres userdel -r renderer
+    sudo userdel -f renderer
     sudo -u postgres createuser renderer
     sudo -u postgres createdb -E UTF8 -O renderer gis
     sudo -u postgres psql -d gis -c "CREATE EXTENSION postgis;"
