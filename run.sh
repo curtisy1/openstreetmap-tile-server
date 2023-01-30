@@ -94,7 +94,7 @@ if [ "$1" == "import" ]; then
     # Initialize PostgreSQL
     createPostgresConfig
     service postgresql start
-    if ! id -u renderer > /dev/null 2>&1; then
+    if ! id renderer > /dev/null; then
       sudo -u postgres createuser renderer
     fi
     
